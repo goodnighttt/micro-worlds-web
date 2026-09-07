@@ -6,7 +6,7 @@ from pathlib import Path
 from mathutils import Matrix
 W=Path(__file__).resolve().parents[1];R=W.parent
 key=sys.argv[sys.argv.index('--')+1]
-folder,stem={'shrine':('01_神社_木漏日','Komorebi_Shrine_Animated'),'station':('02_樱花车站','Sakura_Station_Animated'),'water':('03_水世界漂浮堡垒','Water_Fortress_AssetWorld')}[key]
+folder,stem={'shrine':('01_神社_木漏日','Komorebi_Shrine_Animated'),'station':('02_樱花车站','Sakura_Station_Animated'),'water':('03_水世界漂浮堡垒','Water_Fortress_DetailFilm')}[key]
 bpy.ops.wm.open_mainfile(filepath=str(R/folder/(stem+'.blend')))
 s=bpy.context.scene;s.frame_set(1);s.render.fps=24
 original=list(s.objects)

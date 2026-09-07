@@ -13,7 +13,7 @@ export class WorldViewer{
  private composer:EffectComposer;private bloom:UnrealBloomPass;private observer:ResizeObserver;private frame=0;private disposed=false;private generation=0;private model:T.Group|null=null;private id='shrine';private meta:Meta|null=null;
  private settings:ViewSettings={night:false,close:false,playing:true};private lightMix=0;private time=12;private last=0;private moving=false;private endPosition=new T.Vector3();private endTarget=new T.Vector3();private endZoom=1;
  private sun=new T.DirectionalLight(0xffe9cb,3.1);private moon=new T.DirectionalLight(0x8baeff,.5);private sky=new T.HemisphereLight(0xe9f0df,0x6d7460,2);
- private lamps=new T.Group();private emissive=new Map<T.MeshStandardMaterial,{color:T.Color;strength:number}>();private signals:T.MeshStandardMaterial[]=[];private tram:T.Object3D|null=null;private mixer:T.AnimationMixer|null=null;
+ private lamps=new T.Group();private emissive=new Map<T.MeshStandardMaterial,{color:T.Color;strength:number}>();private signals:T.MeshStandardMaterial[]=[];private tram:T.Object3D|null=null;private mixer:T.AnimationMixer|null=null;private fireflies:T.PointLight[]=[];
  private ground:T.Mesh;private abort:AbortController|null=null;
  private waterTime={value:0};
  constructor(private host:HTMLElement,private status:(text:string,error?:boolean)=>void){
@@ -40,7 +40,10 @@ export class WorldViewer{
     if(m.name.includes('Signal')){if(!this.signals.includes(m))this.signals.push(m)}
     else if(m.emissiveIntensity>0&&m.emissive.getHex()>0){this.emissive.set(m,{color:m.emissive.clone(),strength:Math.max(m.emissiveIntensity,2)})}
    }});
-   this.lamps.clear();meta.lights.slice(0,24).forEach(l=>{const lamp=l.type==='SPOT'?new T.SpotLight():new T.PointLight();lamp.color.fromArray(l.color);lamp.intensity=0;lamp.distance=id==='water'?12:8;lamp.decay=2;lamp.position.fromArray(l.position);lamp.userData={base:Math.min(l.power*.14,20),origin:lamp.position.clone(),head:l.name.includes('headlight')};if(lamp instanceof T.SpotLight){lamp.angle=.5;lamp.penumbra=.65;lamp.target.position.copy(lamp.position).add(new T.Vector3(lamp.position.x<0?-8:8,-1,0));this.lamps.add(lamp.target);lamp.userData.target=lamp.target.position.clone()}this.lamps.add(lamp)});
+   this.lamps.clear();this.fireflies=[];meta.lights.slice(0,24).forEach(l=>{const lamp=l.type==='SPOT'?new T.SpotLight():new T.PointLight();lamp.color.fromArray(l.color);lamp.intensity=0;lamp.distance=id==='water'?12:8;lamp.decay=2;lamp.position.fromArray(l.position);lamp.userData={base:Math.min(l.power*.14,20),origin:lamp.position.clone(),head:l.name.includes('headlight')};if(lamp instanceof T.SpotLight){lamp.angle=.5;lamp.penumbra=.65;lamp.target.position.copy(lamp.position).add(new T.Vector3(lamp.position.x<0?-8:8,-1,0));this.lamps.add(lamp.target);lamp.userData.target=lamp.target.position.clone()}this.lamps.add(lamp)});
+   if(id==='station')[-6,-2,3].forEach((x,i)=>{const l=new T.PointLight(0xb7c9ff,0,8,2);l.position.set(x,3.8,1.6);l.userData={base:7,origin:l.position.clone()};this.lamps.add(l)});
+   if(id==='water')[-8,-2,5,10].forEach((x,i)=>{const l=new T.PointLight(0x8fb8ff,0,15,2);l.position.set(x,7,3);l.userData={base:5,origin:l.position.clone()};this.lamps.add(l)});
+   if(id==='shrine'){for(let i=0;i<12;i++){const l=new T.PointLight(0xb8ff9c,0,3.5,2);l.position.set(-6+(i*1.37)%12,1.2+(i%3)*.6,-5+(i*2.11)%10);l.userData={base:1.8,origin:l.position.clone(),firefly:i};this.lamps.add(l);this.fireflies.push(l)}}
    this.time=12;this.reset();this.status('');
   }catch(e){if(this.disposed||token!==this.generation||e instanceof DOMException&&e.name==='AbortError')return;this.status('场景暂时未能加载，请重试。',true)}
  }
@@ -67,7 +70,7 @@ export class WorldViewer{
    if(this.tram){const t=this.time%30;tramOffset=t<10?28*(1-T.MathUtils.smoothstep(t,1.5,10)):t<17?0:-32*T.MathUtils.smoothstep(t,17,26);this.tram.position.x=tramOffset;this.tram.visible=t<27;
     const aspect=t>=1.5&&t<10?'Amber':t>=16.5&&t<26?'Green':'Red';this.signals.forEach(m=>{const name=m.name.toLowerCase();const active=name.includes(aspect.toLowerCase())||(aspect==='Amber'&&name.includes('yellow'));m.emissive.set(name.includes('red')?0xff240b:name.includes('green')?0x18ff45:0xffa600);m.emissiveIntensity=active?5:.02})
    }
-   this.lamps.children.forEach(o=>{if(!(o instanceof T.Light))return;o.intensity=o.userData.base*T.MathUtils.lerp(.04,1,n);if(o.userData.head){o.position.copy(o.userData.origin);o.position.x+=tramOffset;if(o instanceof T.SpotLight){o.target.position.copy(o.userData.target);o.target.position.x+=tramOffset}}});
+   this.lamps.children.forEach(o=>{if(!(o instanceof T.Light))return;const flicker=o.userData.firefly!==undefined?.65+.35*Math.sin(this.time*2.2+o.userData.firefly):1;o.intensity=o.userData.base*T.MathUtils.lerp(.02,1,n)*flicker;if(o.userData.head){o.position.copy(o.userData.origin);o.position.x+=tramOffset;if(o instanceof T.SpotLight){o.target.position.copy(o.userData.target);o.target.position.x+=tramOffset}}});
    if(this.moving){this.camera.position.lerp(this.endPosition,a);this.controls.target.lerp(this.endTarget,a);this.camera.zoom=T.MathUtils.lerp(this.camera.zoom,this.endZoom,a);this.camera.updateProjectionMatrix();if(this.camera.position.distanceTo(this.endPosition)<.005)this.moving=false}
    this.controls.update();this.composer.render();
   }this.frame=requestAnimationFrame(this.tick);
@@ -75,4 +78,3 @@ export class WorldViewer{
  private release(root:T.Object3D){const mats=new Set<T.Material>(),textures=new Set<T.Texture>();root.traverse(o=>{if(o instanceof T.Mesh){o.geometry.dispose();(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m))}});mats.forEach(m=>{Object.values(m).forEach(v=>{if(v instanceof T.Texture)textures.add(v)});m.dispose()});textures.forEach(t=>t.dispose())}
  dispose(){this.disposed=true;this.abort?.abort();cancelAnimationFrame(this.frame);this.observer.disconnect();this.controls.dispose();if(this.model)this.release(this.model);this.release(this.ground);this.composer.dispose();this.bloom.dispose();this.renderer.dispose();this.renderer.domElement.remove()}
 }
-

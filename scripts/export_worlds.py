@@ -12,7 +12,7 @@ key=sys.argv[sys.argv.index('--')+1]
 config={
  'shrine':('01_神社_木漏日','Komorebi_Shrine_Animated.blend',1,(0,.4,4.5),23),
  'station':('02_樱花车站','Sakura_Station_Animated.blend',280,(0,0,3),22),
- 'water':('03_水世界漂浮堡垒','Water_Fortress_AssetWorld.blend',1,(0,0,3.6),42),
+ 'water':('03_水世界漂浮堡垒','Water_Fortress_DetailFilm.blend',1,(0,0,3.6),42),
 }
 folder,filename,frame,target,size=config[key]
 P=ROOT/folder
