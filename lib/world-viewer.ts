@@ -17,10 +17,11 @@ export class WorldViewer{
  private ground:T.Mesh;private abort:AbortController|null=null;
  private waterTime={value:0};
  constructor(private host:HTMLElement,private status:(text:string,error?:boolean)=>void){
-  this.renderer=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.setClearColor(0,0);host.appendChild(this.renderer.domElement);
+  this.renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.toneMapping=T.ACESFilmicToneMapping;
   this.controls=new OrbitControls(this.camera,this.renderer.domElement);this.controls.enableDamping=true;this.controls.dampingFactor=.07;this.controls.minPolarAngle=.2;this.controls.maxPolarAngle=Math.PI*.47;this.controls.enablePan=false;this.controls.minZoom=.65;this.controls.maxZoom=3;
   this.controls.addEventListener('start',()=>{this.moving=false});this.sun.position.set(-12,25,15);this.sun.castShadow=true;this.sun.shadow.mapSize.set(2048,2048);Object.assign(this.sun.shadow.camera,{left:-30,right:30,top:30,bottom:-30,far:100});this.sun.shadow.bias=-.00015;this.sun.shadow.normalBias=.035;
   this.moon.position.set(10,20,-12);this.scene.add(this.sun,this.moon,this.sky,this.lamps);
+  this.scene.background=new T.Color(0xe8ecdf);this.scene.fog=new T.Fog(0xe8ecdf,48,140);this.renderer.setClearColor(0xe8ecdf,1);host.appendChild(this.renderer.domElement);
   this.ground=new T.Mesh(new T.PlaneGeometry(200,200),new T.MeshStandardMaterial({color:0xe8ecdf,roughness:1}));this.ground.rotation.x=-Math.PI/2;this.ground.position.y=-1.2;this.ground.receiveShadow=true;this.scene.add(this.ground);
   this.composer=new EffectComposer(this.renderer);this.composer.addPass(new RenderPass(this.scene,this.camera));this.bloom=new UnrealBloomPass(new T.Vector2(800,800),.22,.45,1.2);this.composer.addPass(this.bloom);this.composer.addPass(new OutputPass());
   this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(host);this.resize();this.frame=requestAnimationFrame(this.tick);
@@ -53,12 +54,13 @@ export class WorldViewer{
  }
  zoom(factor:number){this.moving=false;this.camera.zoom=T.MathUtils.clamp(this.camera.zoom/factor,.65,3);this.camera.updateProjectionMatrix()}
  rotate(angle:number){this.moving=false;const d=this.camera.position.clone().sub(this.controls.target);d.applyAxisAngle(new T.Vector3(0,1,0),angle);this.camera.position.copy(this.controls.target).add(d);this.controls.update()}
- private resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;const size=(this.meta?.size||23)*(w<680?1.7:1.08);this.camera.left=-size*w/h/2;this.camera.right=size*w/h/2;this.camera.top=size/2;this.camera.bottom=-size/2;this.camera.setViewOffset(w,h,w<680?0:-w*.085,w<680?h*.045:0,w,h);this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.composer.setSize(w,h)}
+ private resize(){const w=this.host.clientWidth,h=this.host.clientHeight;if(!w||!h)return;const size=(this.meta?.size||23)*(w<680?1.7:1.08);this.camera.left=-size*w/h/2;this.camera.right=size*w/h/2;this.camera.top=size/2;this.camera.bottom=-size/2;this.camera.setViewOffset(w,h,w<680?0:-w*.04,w<680?h*.02:h*.015,w,h);this.camera.updateProjectionMatrix();this.renderer.setSize(w,h);this.composer.setSize(w,h)}
  private tick=(stamp:number)=>{
   if(this.disposed)return;const dt=Math.min((stamp-this.last)/1000,.05);this.last=stamp;
   if(!document.hidden){
    const a=1-Math.exp(-dt*4);this.lightMix=T.MathUtils.lerp(this.lightMix,this.settings.night?1:0,a);const n=this.lightMix;
-   this.sun.intensity=T.MathUtils.lerp(2.2,.06,n);this.sky.intensity=T.MathUtils.lerp(1.1,.22,n);this.sky.color.copy(new T.Color(0xe9f0df)).lerp(new T.Color(0x657fa9),n);this.moon.intensity=T.MathUtils.lerp(.08,.42,n);this.bloom.strength=T.MathUtils.lerp(.015,.10,n);(this.ground.material as T.MeshStandardMaterial).color.copy(new T.Color(0xe8ecdf)).lerp(new T.Color(0x162333),n);
+   this.sun.intensity=T.MathUtils.lerp(2.2,.06,n);this.sky.intensity=T.MathUtils.lerp(1.1,.22,n);this.sky.color.copy(new T.Color(0xe9f0df)).lerp(new T.Color(0x657fa9),n);this.moon.intensity=T.MathUtils.lerp(.08,.42,n);this.bloom.strength=T.MathUtils.lerp(.015,.10,n);
+   const paper=new T.Color(0xe8ecdf).lerp(new T.Color(0x1c2a38),n);(this.ground.material as T.MeshStandardMaterial).color.copy(paper);(this.scene.background as T.Color).copy(paper);(this.scene.fog as T.Fog).color.copy(paper);this.renderer.setClearColor(paper,1);
    this.emissive.forEach((v,m)=>{m.emissive.copy(v.color);m.emissiveIntensity=T.MathUtils.lerp(0,v.strength*.18,n)});
    if(this.settings.playing){this.time+=dt;this.mixer?.update(dt)}this.waterTime.value=this.time;
    let tramOffset=0;
