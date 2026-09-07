@@ -1,0 +1,155 @@
+{
+  "id": "station",
+  "source": "02_樱花车站/Sakura_Station_Animated.blend",
+  "nightVersion": "Sakura_Station_Animated_WebNight_v01.blend",
+  "blender": "5.1.0",
+  "frame": 280,
+  "target": [
+    0,
+    3,
+    0
+  ],
+  "size": 22,
+  "lights": [
+    {
+      "name": "WEB • headlight",
+      "position": [
+        -1.374500036239624,
+        1.7400000095367432,
+        3.3400001525878906
+      ],
+      "color": [
+        1.0,
+        0.7599999904632568,
+        0.41999998688697815
+      ],
+      "power": 110.0,
+      "type": "SPOT"
+    },
+    {
+      "name": "WEB • headlight.001",
+      "position": [
+        -1.374500036239624,
+        1.7400000095367432,
+        2.0999999046325684
+      ],
+      "color": [
+        1.0,
+        0.7599999904632568,
+        0.41999998688697815
+      ],
+      "power": 110.0,
+      "type": "SPOT"
+    },
+    {
+      "name": "WEB • headlight.002",
+      "position": [
+        5.374500274658203,
+        1.7400000095367432,
+        3.3400001525878906
+      ],
+      "color": [
+        1.0,
+        0.7599999904632568,
+        0.41999998688697815
+      ],
+      "power": 110.0,
+      "type": "SPOT"
+    },
+    {
+      "name": "WEB • headlight.003",
+      "position": [
+        5.374500274658203,
+        1.7400000095367432,
+        2.0999999046325684
+      ],
+      "color": [
+        1.0,
+        0.7599999904632568,
+        0.41999998688697815
+      ],
+      "power": 110.0,
+      "type": "SPOT"
+    },
+    {
+      "name": "WEB • night sakura",
+      "position": [
+        -5.0,
+        2.0,
+        -2.5
+      ],
+      "color": [
+        1.0,
+        0.3199999928474426,
+        0.5799999833106995
+      ],
+      "power": 150.0,
+      "type": "POINT"
+    },
+    {
+      "name": "WEB • night sakura.001",
+      "position": [
+        4.0,
+        2.0,
+        -3.0
+      ],
+      "color": [
+        1.0,
+        0.3199999928474426,
+        0.5799999833106995
+      ],
+      "power": 150.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Paper lantern • warm pool",
+      "position": [
+        -4.889999866485596,
+        3.369999885559082,
+        -0.20000000298023224
+      ],
+      "color": [
+        1.0,
+        0.41999998688697815,
+        0.12999999523162842
+      ],
+      "power": 35.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Stone lantern warm pool",
+      "position": [
+        -6.130000114440918,
+        2.369999885559082,
+        -0.14000000059604645
+      ],
+      "color": [
+        1.0,
+        0.47999998927116394,
+        0.18000000715255737
+      ],
+      "power": 35.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Station lamp • warm light",
+      "position": [
+        1.8200000524520874,
+        4.420000076293945,
+        -2.130000114440918
+      ],
+      "color": [
+        1.0,
+        0.4399999976158142,
+        0.14000000059604645
+      ],
+      "power": 42.0,
+      "type": "POINT"
+    }
+  ],
+  "groups": [
+    "environment",
+    "tram"
+  ],
+  "animation": "evaluated pose; browser animates tram and environmental motion"
+}

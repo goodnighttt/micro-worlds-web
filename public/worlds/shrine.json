@@ -1,0 +1,109 @@
+{
+  "id": "shrine",
+  "source": "01_神社_木漏日/Komorebi_Shrine_Animated.blend",
+  "nightVersion": "Komorebi_Shrine_Animated_WebNight_v01.blend",
+  "blender": "5.1.0",
+  "frame": 1,
+  "target": [
+    0,
+    4.5,
+    -0.4
+  ],
+  "size": 23,
+  "lights": [
+    {
+      "name": "WEB • path lantern Lantern • warm paper chamber",
+      "position": [
+        -2.950000047683716,
+        2.4160807132720947,
+        5.300000190734863
+      ],
+      "color": [
+        1.0,
+        0.47999998927116394,
+        0.1599999964237213
+      ],
+      "power": 85.0,
+      "type": "POINT"
+    },
+    {
+      "name": "WEB • path lantern Lantern • warm paper chamber.001",
+      "position": [
+        1.649999976158142,
+        2.6582131385803223,
+        4.400000095367432
+      ],
+      "color": [
+        1.0,
+        0.47999998927116394,
+        0.1599999964237213
+      ],
+      "power": 85.0,
+      "type": "POINT"
+    },
+    {
+      "name": "WEB • path lantern Lantern • warm paper chamber.002",
+      "position": [
+        -2.799999952316284,
+        3.8670449256896973,
+        1.899999976158142
+      ],
+      "color": [
+        1.0,
+        0.47999998927116394,
+        0.1599999964237213
+      ],
+      "power": 85.0,
+      "type": "POINT"
+    },
+    {
+      "name": "WEB • path lantern Lantern • warm paper chamber.003",
+      "position": [
+        1.5800000429153442,
+        3.8246099948883057,
+        1.2999999523162842
+      ],
+      "color": [
+        1.0,
+        0.47999998927116394,
+        0.1599999964237213
+      ],
+      "power": 85.0,
+      "type": "POINT"
+    },
+    {
+      "name": "WEB • path lantern Lantern • warm paper chamber.004",
+      "position": [
+        -2.5999999046325684,
+        4.845559597015381,
+        -1.7799999713897705
+      ],
+      "color": [
+        1.0,
+        0.47999998927116394,
+        0.1599999964237213
+      ],
+      "power": 85.0,
+      "type": "POINT"
+    },
+    {
+      "name": "WEB • path lantern Lantern • warm paper chamber.005",
+      "position": [
+        1.2799999713897705,
+        4.956999778747559,
+        -2.25
+      ],
+      "color": [
+        1.0,
+        0.47999998927116394,
+        0.1599999964237213
+      ],
+      "power": 85.0,
+      "type": "POINT"
+    }
+  ],
+  "groups": [
+    "environment"
+  ],
+  "animation": "evaluated pose; browser animates tram and environmental motion"
+}

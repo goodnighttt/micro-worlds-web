@@ -1,0 +1,208 @@
+{
+  "id": "water",
+  "source": "03_水世界漂浮堡垒/Water_Fortress_AssetWorld.blend",
+  "nightVersion": "Water_Fortress_AssetWorld_WebNight_v01.blend",
+  "blender": "5.1.0",
+  "frame": 1,
+  "target": [
+    0,
+    3.6,
+    0
+  ],
+  "size": 42,
+  "lights": [
+    {
+      "name": "Warm refuge pool",
+      "position": [
+        -5.920000076293945,
+        2.359999895095825,
+        -1.4800000190734863
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 55.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.001",
+      "position": [
+        3.680000066757202,
+        2.359999895095825,
+        -1.4800000190734863
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 55.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.002",
+      "position": [
+        -5.71999979019165,
+        4.710000038146973,
+        1.1699999570846558
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 55.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.003",
+      "position": [
+        3.450000047683716,
+        4.710000038146973,
+        1.1699999570846558
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 55.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.004",
+      "position": [
+        -4.849999904632568,
+        7.309999942779541,
+        -1.9800000190734863
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 55.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.005",
+      "position": [
+        1.6799999475479126,
+        7.309999942779541,
+        -2.005000114440918
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 55.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Community hearth • warm sanctuary",
+      "position": [
+        0.10000000149011612,
+        3.9800000190734863,
+        0.550000011920929
+      ],
+      "color": [
+        1.0,
+        0.25999999046325684,
+        0.04500000178813934
+      ],
+      "power": 160.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.006",
+      "position": [
+        -9.869999885559082,
+        2.359999895095825,
+        0.8199999928474426
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 35.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.007",
+      "position": [
+        -9.869999885559082,
+        4.710000038146973,
+        -0.47999998927116394
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 35.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.008",
+      "position": [
+        7.929999828338623,
+        2.359999895095825,
+        -0.3799999952316284
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 35.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.009",
+      "position": [
+        -14.970000267028809,
+        2.0899999141693115,
+        6.869999885559082
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 35.0,
+      "type": "POINT"
+    },
+    {
+      "name": "Warm refuge pool.010",
+      "position": [
+        11.029999732971191,
+        2.144695520401001,
+        -7.130000114440918
+      ],
+      "color": [
+        1.0,
+        0.44999998807907104,
+        0.1599999964237213
+      ],
+      "power": 35.0,
+      "type": "POINT"
+    }
+  ],
+  "groups": [
+    "environment",
+    "Resident 00 • Beach",
+    "Resident 01 • Farmer",
+    "Resident 02 • Casual_2",
+    "Resident 03 • Adventurer",
+    "Resident 04 • Casual_2",
+    "Resident 05 • Farmer",
+    "Resident 06 • Adventurer",
+    "Resident 07 • Farmer",
+    "Resident 08 • Beach"
+  ],
+  "animation": "evaluated pose; browser animates tram and environmental motion"
+}
