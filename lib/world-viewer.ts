@@ -13,7 +13,7 @@ export class WorldViewer{
  private composer:EffectComposer;private bloom:UnrealBloomPass;private observer:ResizeObserver;private frame=0;private disposed=false;private generation=0;private model:T.Group|null=null;private id='shrine';private meta:Meta|null=null;
  private settings:ViewSettings={night:false,close:false,playing:true};private lightMix=0;private time=12;private last=0;private moving=false;private endPosition=new T.Vector3();private endTarget=new T.Vector3();private endZoom=1;
  private sun=new T.DirectionalLight(0xffe9cb,3.1);private moon=new T.DirectionalLight(0x8baeff,.5);private sky=new T.HemisphereLight(0xe9f0df,0x6d7460,2);
- private lamps=new T.Group();private emissive=new Map<T.MeshStandardMaterial,{color:T.Color;strength:number}>();private signals:T.MeshStandardMaterial[]=[];private tram:T.Object3D|null=null;
+ private lamps=new T.Group();private emissive=new Map<T.MeshStandardMaterial,{color:T.Color;strength:number}>();private signals:T.MeshStandardMaterial[]=[];private tram:T.Object3D|null=null;private mixer:T.AnimationMixer|null=null;
  private ground:T.Mesh;private abort:AbortController|null=null;
  private waterTime={value:0};
  constructor(private host:HTMLElement,private status:(text:string,error?:boolean)=>void){
@@ -28,18 +28,18 @@ export class WorldViewer{
  async load(id:string){
   const token=++this.generation;this.id=id;this.abort?.abort();this.abort=new AbortController();this.status('正在走进小世界…');
   try{
-   const [meta,buffer]=await Promise.all([fetch(`/worlds/${id}.json`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('metadata');return r.json() as Promise<Meta>}),fetch(`/worlds/${id}.glb`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('model');return r.arrayBuffer()})]);
+   const [meta,buffer]=await Promise.all([fetch(`/worlds/${id}.json`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('metadata');return r.json() as Promise<Meta>}),fetch(`/worlds/${id}-v02.glb`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('model');return r.arrayBuffer()})]);
    if(this.disposed||token!==this.generation)return;this.status('正在铺开这片风景…');
    const decoder=new DRACOLoader().setDecoderPath('/draco/');
    let gltf;try{gltf=await new GLTFLoader().setDRACOLoader(decoder).parseAsync(buffer,'/worlds/')}finally{decoder.dispose()}
    if(this.disposed||token!==this.generation){this.release(gltf.scene);return}
-   if(this.model){this.scene.remove(this.model);this.release(this.model)}this.model=gltf.scene;this.meta=meta;this.scene.add(this.model);this.emissive.clear();this.signals=[];this.tram=null;
+   if(this.model){this.scene.remove(this.model);this.release(this.model)}this.model=gltf.scene;this.meta=meta;this.scene.add(this.model);this.mixer=gltf.animations?.length?new T.AnimationMixer(this.model):null;gltf.animations?.forEach((clip:T.AnimationClip)=>this.mixer?.clipAction(clip).play());this.emissive.clear();this.signals=[];this.tram=null;
    this.model.traverse(o=>{if(o.name==='tram')this.tram=o;if(!(o instanceof T.Mesh))return;o.castShadow=true;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(!(m instanceof T.MeshStandardMaterial))continue;
     if(m.name.toLowerCase().includes('water')||m.name.toLowerCase().includes('ocean')){m.color.set(0x327c8c);m.roughness=.32;m.metalness=.15;m.transparent=true;m.opacity=.92;m.onBeforeCompile=shader=>{shader.uniforms.uWorldTime=this.waterTime;shader.vertexShader='uniform float uWorldTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.y += 0.035*sin(position.x*1.8+uWorldTime)*cos(position.z*1.3+uWorldTime*0.7);')};m.needsUpdate=true}
     if(m.name.includes('Signal')){if(!this.signals.includes(m))this.signals.push(m)}
     else if(m.emissiveIntensity>0&&m.emissive.getHex()>0){this.emissive.set(m,{color:m.emissive.clone(),strength:Math.max(m.emissiveIntensity,2)})}
    }});
-   this.lamps.clear();meta.lights.slice(0,24).forEach(l=>{const lamp=l.type==='SPOT'?new T.SpotLight():new T.PointLight();lamp.color.fromArray(l.color);lamp.intensity=0;lamp.distance=id==='water'?12:8;lamp.decay=2;lamp.position.fromArray(l.position);lamp.userData={base:Math.min(l.power*.6,100),origin:lamp.position.clone(),head:l.name.includes('headlight')};if(lamp instanceof T.SpotLight){lamp.angle=.5;lamp.penumbra=.65;lamp.target.position.copy(lamp.position).add(new T.Vector3(lamp.position.x<0?-8:8,-1,0));this.lamps.add(lamp.target);lamp.userData.target=lamp.target.position.clone()}this.lamps.add(lamp)});
+   this.lamps.clear();meta.lights.slice(0,24).forEach(l=>{const lamp=l.type==='SPOT'?new T.SpotLight():new T.PointLight();lamp.color.fromArray(l.color);lamp.intensity=0;lamp.distance=id==='water'?12:8;lamp.decay=2;lamp.position.fromArray(l.position);lamp.userData={base:Math.min(l.power*.14,20),origin:lamp.position.clone(),head:l.name.includes('headlight')};if(lamp instanceof T.SpotLight){lamp.angle=.5;lamp.penumbra=.65;lamp.target.position.copy(lamp.position).add(new T.Vector3(lamp.position.x<0?-8:8,-1,0));this.lamps.add(lamp.target);lamp.userData.target=lamp.target.position.clone()}this.lamps.add(lamp)});
    this.time=12;this.reset();this.status('');
   }catch(e){if(this.disposed||token!==this.generation||e instanceof DOMException&&e.name==='AbortError')return;this.status('场景暂时未能加载，请重试。',true)}
  }
@@ -58,9 +58,9 @@ export class WorldViewer{
   if(this.disposed)return;const dt=Math.min((stamp-this.last)/1000,.05);this.last=stamp;
   if(!document.hidden){
    const a=1-Math.exp(-dt*4);this.lightMix=T.MathUtils.lerp(this.lightMix,this.settings.night?1:0,a);const n=this.lightMix;
-   this.sun.intensity=T.MathUtils.lerp(3.1,.10,n);this.sky.intensity=T.MathUtils.lerp(2,.45,n);this.sky.color.copy(new T.Color(0xe9f0df)).lerp(new T.Color(0x657fa9),n);this.moon.intensity=T.MathUtils.lerp(.12,1.05,n);this.bloom.strength=T.MathUtils.lerp(.08,.38,n);(this.ground.material as T.MeshStandardMaterial).color.copy(new T.Color(0xe8ecdf)).lerp(new T.Color(0x162333),n);
-   this.emissive.forEach((v,m)=>{m.emissive.copy(v.color);m.emissiveIntensity=T.MathUtils.lerp(.08,v.strength,n)});
-   if(this.settings.playing)this.time+=dt;this.waterTime.value=this.time;
+   this.sun.intensity=T.MathUtils.lerp(2.2,.06,n);this.sky.intensity=T.MathUtils.lerp(1.1,.22,n);this.sky.color.copy(new T.Color(0xe9f0df)).lerp(new T.Color(0x657fa9),n);this.moon.intensity=T.MathUtils.lerp(.08,.42,n);this.bloom.strength=T.MathUtils.lerp(.015,.10,n);(this.ground.material as T.MeshStandardMaterial).color.copy(new T.Color(0xe8ecdf)).lerp(new T.Color(0x162333),n);
+   this.emissive.forEach((v,m)=>{m.emissive.copy(v.color);m.emissiveIntensity=T.MathUtils.lerp(0,v.strength*.18,n)});
+   if(this.settings.playing){this.time+=dt;this.mixer?.update(dt)}this.waterTime.value=this.time;
    let tramOffset=0;
    if(this.tram){const t=this.time%30;tramOffset=t<10?28*(1-T.MathUtils.smoothstep(t,1.5,10)):t<17?0:-32*T.MathUtils.smoothstep(t,17,26);this.tram.position.x=tramOffset;this.tram.visible=t<27;
     const aspect=t>=1.5&&t<10?'Amber':t>=16.5&&t<26?'Green':'Red';this.signals.forEach(m=>{const name=m.name.toLowerCase();const active=name.includes(aspect.toLowerCase())||(aspect==='Amber'&&name.includes('yellow'));m.emissive.set(name.includes('red')?0xff240b:name.includes('green')?0x18ff45:0xffa600);m.emissiveIntensity=active?5:.02})
