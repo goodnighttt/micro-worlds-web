@@ -43,7 +43,13 @@ export class WorldViewer{
    if(this.mixer){for(const clip of this.details.clips)this.mixer.clipAction(clip).play();this.host.dataset.animationTracks=String(this.details.clips.reduce((n,c)=>n+c.tracks.length,0))}this.emissive.clear();this.blossoms.clear();this.signals=[];this.tram=null;this.ground.visible=id!=='water';
    this.renderer.setPixelRatio(Math.min(devicePixelRatio,id==='water'?1:1.25));this.composer.setPixelRatio(Math.min(devicePixelRatio,id==='water'?1:1.25));this.renderer.shadowMap.needsUpdate=true;
    (this.scene.fog as T.Fog).near=meta.size*2.8;(this.scene.fog as T.Fog).far=meta.size*6;
-   this.model.traverse(o=>{if(o.name==='tram')this.tram=o;if(!(o instanceof T.Mesh))return;o.castShadow=true;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(!(m instanceof T.MeshStandardMaterial))continue;
+   this.model.traverse(o=>{if(o.name==='tram')this.tram=o;if(!(o instanceof T.Mesh))return;o.castShadow=true;o.receiveShadow=true;
+    // Skinned character parts can move outside their bind-pose bounds during
+    // animation. Three.js frustum culling uses those stale bounds, which can
+    // clip a head, torso, or legs in the middle of a shot.
+    if(o instanceof T.SkinnedMesh)o.frustumCulled=false;
+    const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(!(m instanceof T.MeshStandardMaterial))continue;
+    if(id==='shrine'&&m.name.toLowerCase().includes('hair')){m.side=T.DoubleSide;m.transparent=false;m.depthWrite=true;m.opacity=1}
     if(m.name.toLowerCase().includes('backdrop')){m.visible=false;continue}
     if(id==='station'&&m.name.startsWith('Sakura blossom'))this.blossoms.set(m,m.color.clone());
     if(id==='water')m.aoMapIntensity=.6;
