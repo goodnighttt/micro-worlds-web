@@ -6,9 +6,23 @@ from pathlib import Path
 from mathutils import Matrix
 W=Path(__file__).resolve().parents[1];R=W.parent
 key=sys.argv[sys.argv.index('--')+1]
+output_name=sys.argv[sys.argv.index('--')+2] if len(sys.argv)>sys.argv.index('--')+2 else key+'-v02.glb'
 folder,stem={'shrine':('01_神社_木漏日','Komorebi_Shrine_Animated'),'station':('02_樱花车站','Sakura_Station_Animated'),'water':('03_水世界漂浮堡垒','Water_Fortress_DetailFilm')}[key]
 bpy.ops.wm.open_mainfile(filepath=str(R/folder/(stem+'.blend')))
 s=bpy.context.scene;s.frame_set(1);s.render.fps=24
+# Bake symmetry into the in-memory export copy without baking the armature.
+mirror_report=[]
+for o in list(s.objects):
+ if o.type!='MESH' or not any(m.type=='ARMATURE' for m in o.modifiers):continue
+ for mod in list(o.modifiers):
+  if mod.type!='MIRROR':continue
+  before=len(o.data.vertices)
+  bpy.ops.object.select_all(action='DESELECT');o.hide_set(False);o.select_set(True)
+  bpy.context.view_layer.objects.active=o;o.data=o.data.copy()
+  bpy.ops.object.modifier_apply(modifier=mod.name)
+  mirror_report.append({'object':o.name,'before':before,'after':len(o.data.vertices)})
+  assert len(o.data.vertices)>before, 'Symmetry was not expanded: '+o.name
+(W/'intermediate'/(key+'-mirror-export.json')).write_text(json.dumps(mirror_report,ensure_ascii=False,indent=2),encoding='utf8')
 original=list(s.objects)
 keep=set()
 for o in original:
@@ -59,5 +73,5 @@ for im in bpy.data.images:
  if max(im.size)>1024:ratio=1024/max(im.size);im.scale(int(im.size[0]*ratio),int(im.size[1]*ratio))
 s.frame_end+=1
 print('ANIMATION_EXPORT',len(s.objects),s.frame_end,flush=True)
-bpy.ops.export_scene.gltf(filepath=str(W/'public/worlds'/(key+'-v02.glb')),export_format='GLB',export_animations=True,export_animation_mode='SCENE',export_frame_range=True,export_frame_step=2,export_force_sampling=True,export_bake_animation=True,export_optimize_animation_size=True,export_morph=True,export_morph_normal=False,export_skins=True,export_cameras=False,export_lights=False,export_extras=True,export_apply=False)
+bpy.ops.export_scene.gltf(filepath=str(W/'public/worlds'/output_name),export_format='GLB',export_animations=True,export_animation_mode='SCENE',export_frame_range=True,export_frame_step=2,export_force_sampling=True,export_bake_animation=True,export_optimize_animation_size=True,export_morph=True,export_morph_normal=False,export_skins=True,export_cameras=False,export_lights=False,export_extras=True,export_apply=False)
 print('ANIMATED_EXPORT_COMPLETE',key,flush=True)

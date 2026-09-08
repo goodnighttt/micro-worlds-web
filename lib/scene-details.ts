@@ -1,6 +1,18 @@
 import * as T from 'three';
 
 const readable=(o:T.Object3D)=>o.name.replaceAll('_',' ');
+export const isTramRoot=(o:T.Object3D)=>readable(o)==='TRAM • route master'||o.name==='tram';
+export function tramRoute(seconds:number){
+ const t=((seconds%30)+30)%30;
+ return {x:t<10?2+40*(1-T.MathUtils.smoothstep(t,1.5,10)):t<17?2:2-44*T.MathUtils.smoothstep(t,17,26),visible:t>=1.5&&t<26.5};
+}
+function repeatPoseCycle(tracks:T.KeyframeTrack[],duration:number){
+ return tracks.map(track=>{
+  const size=track.getValueSize(),sample=track instanceof T.QuaternionKeyframeTrack?new T.QuaternionLinearInterpolant(track.times,track.values,size):new T.LinearInterpolant(track.times,track.values,size);
+  const times=[0,...Array.from(track.times).filter(t=>t>0&&t<2),2],first=Array.from(sample.evaluate(0));
+  const result=track.clone();result.times=new Float32Array(times.map(t=>t*duration/2));result.values=new Float32Array(times.flatMap(t=>t===2?first:Array.from(sample.evaluate(t))));return result;
+ });
+}
 export function courtyardRoute(seconds:number){
  const angle=seconds/12*Math.PI*2;
  // The open forecourt: east of the stair footprint and in front of the hearth.
@@ -18,6 +30,13 @@ export class SceneDetails {
   this.duration=Math.max(...clips.map(clip=>clip.duration),1);
   const removed=new Set<T.KeyframeTrack>();
   const gait:T.KeyframeTrack[]=[];
+  // The browser owns train translation. Remove the film's return-to-start
+  // interpolation so it cannot race through the platform at the loop seam.
+  if(id==='station')for(const track of tracks){
+   const binding=T.PropertyBinding.parseTrackName(track.name);
+   const node=T.PropertyBinding.findNode(root,binding.nodeName) as T.Object3D|undefined;
+   if(node&&isTramRoot(node))removed.add(track);
+  }
   if(id==='shrine')for(const track of tracks){
    const binding=T.PropertyBinding.parseTrackName(track.name);
    const node=T.PropertyBinding.findNode(root,binding.nodeName) as T.Object3D|undefined;
@@ -31,6 +50,17 @@ export class SceneDetails {
    node.scale.setScalar(1);removed.add(track);
   }
   if(id==='water'){
+   // The source is a cut-based film: NLA actions stop after 8 seconds.
+   // Repeat gentler task gestures throughout the interactive visit; retain the
+   // bespoke fishermen and lookout timelines rather than replacing their poses.
+   for(const id of ['02','04','05','06','07']){
+    const taskTracks=tracks.filter(track=>{
+     const binding=T.PropertyBinding.parseTrackName(track.name);let node=T.PropertyBinding.findNode(root,binding.nodeName) as T.Object3D|undefined;
+     while(node){if(readable(node)===`Resident ${id} • CharacterArmature`)return true;node=node.parent||undefined}return false;
+    });
+    taskTracks.forEach(t=>removed.add(t));
+    if(taskTracks.length)this.clips.push(new T.AnimationClip(`Resident ${id} task`,4,repeatPoseCycle(taskTracks,4)));
+   }
    root.traverse(o=>{if(readable(o)==='Resident 03 • Adventurer')this.walker=o});
    const descendants=new Set<T.Object3D>();this.walker?.traverse(o=>descendants.add(o));
    for(const track of tracks){
@@ -42,13 +72,7 @@ export class SceneDetails {
    // DetailFilm holds the character after the last camera cut. Repeat its complete
    // original two-second walk cycle instead of inheriting that film-only hold.
    if(gait.length){
-    const loop=gait.map(track=>{
-     const size=track.getValueSize(),sample=track instanceof T.QuaternionKeyframeTrack?new T.QuaternionLinearInterpolant(track.times,track.values,size):new T.LinearInterpolant(track.times,track.values,size);
-     // Resampling may remove the key exactly at 2s. Insert both endpoints and
-     // match their values explicitly so the gait cannot snap on each loop.
-     const times=[0,...Array.from(track.times).filter(t=>t>0&&t<2),2];const first=Array.from(sample.evaluate(0));const values=times.flatMap(t=>t===2?first:Array.from(sample.evaluate(t)));
-     const result=track.clone();result.times=new Float32Array(times);result.values=new Float32Array(values);return result;
-    });
+    const loop=repeatPoseCycle(gait,2);
     this.clips.push(new T.AnimationClip('Courtyard walk',2,loop));
    }
    this.fire=fireTexture||new T.TextureLoader().load('/worlds/fire-5x5.png');

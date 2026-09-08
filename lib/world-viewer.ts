@@ -6,7 +6,7 @@ import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer.j
 import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass.js';
 import {UnrealBloomPass} from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from 'three/examples/jsm/postprocessing/OutputPass.js';
-import {SceneDetails} from './scene-details';
+import {SceneDetails,isTramRoot,tramRoute} from './scene-details';
 export type ViewSettings={night:boolean;close:boolean;playing:boolean};
 type Meta={target:number[];size:number;lights:{name:string;position:number[];color:number[];power:number;type:string}[]};
 export class WorldViewer{
@@ -33,7 +33,7 @@ export class WorldViewer{
  async load(id:string){
   const token=++this.generation;this.id=id;this.abort?.abort();this.abort=new AbortController();this.status('正在走进小世界…');
   try{
-   const [meta,buffer]=await Promise.all([fetch(`/worlds/${id}.json`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('metadata');return r.json() as Promise<Meta>}),fetch(`/worlds/${id}-${id==='water'?'v03':'v02'}.glb`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('model');return r.arrayBuffer()})]);
+   const [meta,buffer]=await Promise.all([fetch(`/worlds/${id}.json`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('metadata');return r.json() as Promise<Meta>}),fetch(`/worlds/${id}-${id==='water'?'v04':'v02'}.glb`,{signal:this.abort.signal}).then(r=>{if(!r.ok)throw Error('model');return r.arrayBuffer()})]);
    if(this.disposed||token!==this.generation)return;this.status('正在铺开这片风景…');
    const decoder=new DRACOLoader().setDecoderPath('/draco/');
    let gltf;try{gltf=await new GLTFLoader().setDRACOLoader(decoder).parseAsync(buffer,'/worlds/')}finally{decoder.dispose()}
@@ -43,7 +43,7 @@ export class WorldViewer{
    if(this.mixer){for(const clip of this.details.clips)this.mixer.clipAction(clip).play();this.host.dataset.animationTracks=String(this.details.clips.reduce((n,c)=>n+c.tracks.length,0))}this.emissive.clear();this.blossoms.clear();this.signals=[];this.tram=null;this.ground.visible=id!=='water';
    this.renderer.setPixelRatio(Math.min(devicePixelRatio,id==='water'?1:1.25));this.composer.setPixelRatio(Math.min(devicePixelRatio,id==='water'?1:1.25));this.renderer.shadowMap.needsUpdate=true;
    (this.scene.fog as T.Fog).near=meta.size*2.8;(this.scene.fog as T.Fog).far=meta.size*6;
-   this.model.traverse(o=>{if(o.name==='tram')this.tram=o;if(!(o instanceof T.Mesh))return;o.castShadow=true;o.receiveShadow=true;
+   this.model.traverse(o=>{if(isTramRoot(o))this.tram=o;if(!(o instanceof T.Mesh))return;o.castShadow=true;o.receiveShadow=true;
     // Skinned character parts can move outside their bind-pose bounds during
     // animation. Three.js frustum culling uses those stale bounds, which can
     // clip a head, torso, or legs in the middle of a shot.
@@ -87,13 +87,13 @@ export class WorldViewer{
    const openNight=this.id!=='shrine',sakura=this.id==='station',water=this.id==='water';this.sun.intensity=T.MathUtils.lerp(2.2,.06,n);this.sky.intensity=T.MathUtils.lerp(1.1,water?.75:openNight?.56:.30,n);this.sky.color.copy(new T.Color(0xe9f0df)).lerp(new T.Color(sakura?0xe5bfd4:0xa4bcda),n);this.sky.groundColor.copy(new T.Color(0x6d7460)).lerp(new T.Color(water?0x8c9aae:0x6d7460),n);this.moon.color.set(sakura?0xffc8de:0x8baeff);this.moon.intensity=T.MathUtils.lerp(.08,openNight?1.35:.55,n);this.ambient.intensity=water?T.MathUtils.lerp(.08,.26,n):0;this.fill.intensity=water?T.MathUtils.lerp(.12,.48,n):0;this.bloom.strength=T.MathUtils.lerp(.015,.08,n);this.bloom.enabled=!water&&n>.02;
    this.blossoms.forEach((color,m)=>{m.color.copy(color).lerp(new T.Color(0xf4b2ca),n*.58);m.emissive.set(0xc65e8a);m.emissiveIntensity=n*.06});
    const paper=new T.Color(0xeaf0ed).lerp(new T.Color(sakura?0x302a3c:openNight?0x26394c:0x1c2a38),n);(this.scene.background as T.Color).copy(paper);(this.scene.fog as T.Fog).color.copy(paper);this.renderer.setClearColor(paper,1);
-   this.emissive.forEach((v,m)=>{m.emissive.copy(v.color);m.emissiveIntensity=T.MathUtils.lerp(0,v.strength*.18,n)});
+   this.emissive.forEach((v,m)=>{m.emissive.copy(v.color);m.emissiveIntensity=m.name.includes('Tram')&&m.name.includes('warm lights')?T.MathUtils.lerp(.8,3,n):T.MathUtils.lerp(0,v.strength*.18,n)});
    if(this.settings.playing){this.time+=dt;this.mixer?.update(dt)}this.details?.update(this.mixer?.time||0);
    let tramOffset=0;
-   if(this.tram){const t=this.time%30;tramOffset=t<10?28*(1-T.MathUtils.smoothstep(t,1.5,10)):t<17?0:-32*T.MathUtils.smoothstep(t,17,26);this.tram.position.x=tramOffset;this.tram.visible=t<27;
+   if(this.tram){const t=this.time%30,route=tramRoute(this.time);tramOffset=route.x-2;this.tram.position.x=route.x;this.tram.visible=route.visible;
     const aspect=t>=1.5&&t<10?'Amber':t>=16.5&&t<26?'Green':'Red';this.signals.forEach(m=>{const name=m.name.toLowerCase();const active=name.includes(aspect.toLowerCase())||(aspect==='Amber'&&name.includes('yellow'));m.emissive.set(name.includes('red')?0xff240b:name.includes('green')?0x18ff45:0xffa600);m.emissiveIntensity=active?5:.02})
    }
-   this.lamps.children.forEach(o=>{if(!(o instanceof T.Light))return;const flicker=o.userData.firefly!==undefined?.65+.35*Math.sin(this.time*2.2+o.userData.firefly):1;o.intensity=o.userData.base*T.MathUtils.lerp(.02,1,n)*flicker;if(o.userData.head){o.position.copy(o.userData.origin);o.position.x+=tramOffset;if(o instanceof T.SpotLight){o.target.position.copy(o.userData.target);o.target.position.x+=tramOffset}}});
+   this.lamps.children.forEach(o=>{if(!(o instanceof T.Light))return;const flicker=o.userData.firefly!==undefined?.65+.35*Math.sin(this.time*2.2+o.userData.firefly):1;o.intensity=o.userData.base*T.MathUtils.lerp(.02,1,n)*flicker;if(o.userData.head){o.intensity=this.tram?.visible?o.userData.base*T.MathUtils.lerp(.12,2.2,n):0;o.position.copy(o.userData.origin);o.position.x+=tramOffset;if(o instanceof T.SpotLight){o.target.position.copy(o.userData.target);o.target.position.x+=tramOffset}}});
    if(this.moving){this.camera.position.lerp(this.endPosition,a);this.controls.target.lerp(this.endTarget,a);this.camera.zoom=T.MathUtils.lerp(this.camera.zoom,this.endZoom,a);this.camera.updateProjectionMatrix();if(this.camera.position.distanceTo(this.endPosition)<.005)this.moving=false}
    this.controls.update();if(this.measuredFrames%4===0)this.renderer.shadowMap.needsUpdate=true;
    if(this.id==='water')this.renderer.render(this.scene,this.camera);else this.composer.render();this.measuredFrames++;

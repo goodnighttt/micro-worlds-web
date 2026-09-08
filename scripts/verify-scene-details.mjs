@@ -7,7 +7,7 @@ import {SceneDetails,courtyardRoute} from '../lib/scene-details.ts';
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'draco3d.decoder':await draco.createDecoderModule()});
 const reports=[];
 for(const id of ['shrine','water']){
- const doc=await io.read(`public/worlds/${id}-${id==='water'?'v03':'v02'}.glb`),root=new T.Group(),nodes=new Map();
+ const doc=await io.read(`public/worlds/${id}-${id==='water'?'v04':'v02'}.glb`),root=new T.Group(),nodes=new Map();
  for(const n of doc.getRoot().listNodes()){
   const makeMesh=()=>new T.Mesh(new T.BoxGeometry(.1,.1,.1),new T.MeshStandardMaterial());
   const object=n.getMesh()?(n.getMesh().listPrimitives().length>1?new T.Group():makeMesh()):new T.Object3D();
