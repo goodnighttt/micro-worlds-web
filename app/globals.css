@@ -9,7 +9,7 @@
   --glass-shadow: 0 10px 36px #2a403012, inset 0 1px 0 #ffffffcc;
   --accent: #2f6b5c;
   --chip: #ffffffd9;
-  font-family: var(--font-geist-sans), 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
   color: var(--ink);
   background: var(--paper);
   font-synthesis: none;
@@ -169,7 +169,7 @@ a {
 }
 
 .world-tabs button span {
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-family: 'SFMono-Regular', 'Cascadia Code', ui-monospace, monospace;
   color: var(--ink-soft);
   font-size: 11px;
   margin-right: 2px;

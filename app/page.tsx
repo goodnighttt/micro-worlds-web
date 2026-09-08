@@ -4,7 +4,7 @@ import {
   Sun, Moon, Plus, Minus, RotateCcw, Maximize, Boxes, Pause, Play,
   ChevronLeft, ChevronRight, Scan, Focus, Trees, TrainFront, Waves, Move,
 } from 'lucide-react';
-import {WorldViewer} from '../lib/world-viewer';
+import type {WorldViewer} from '../lib/world-viewer';
 
 const worlds = [
   {id: 'shrine', name: '山间神社', en: 'FOREST SANCTUARY', Icon: Trees, detail: '沿着石阶，听树叶与脚步的声音。', night: '灯火照见来路，月色留在林间。'},
@@ -25,16 +25,24 @@ export default function Home() {
 
   useEffect(() => {
     if (!mount.current) return;
-    try {
-      viewer.current = new WorldViewer(mount.current, (s, e = false) => {
-        setStatus(s);
-        setError(e);
-      });
-    } catch {
+    let cancelled = false;
+    void import('../lib/world-viewer').then(({WorldViewer}) => {
+      if (cancelled || !mount.current) return;
+      try {
+        viewer.current = new WorldViewer(mount.current, (s, e = false) => {
+          setStatus(s);
+          setError(e);
+        });
+        void viewer.current.load('shrine');
+      } catch {
+        setStatus('无法启动三维画面，请使用支持 WebGL 2 的浏览器。');
+        setError(true);
+      }
+    }).catch(() => {
       setStatus('无法启动三维画面，请使用支持 WebGL 2 的浏览器。');
       setError(true);
-    }
-    return () => viewer.current?.dispose();
+    });
+    return () => { cancelled = true; viewer.current?.dispose(); viewer.current = null; };
   }, []);
 
   useEffect(() => {
